@@ -70,8 +70,8 @@ o 是方差 u是平均值
 g 是缩放 b是平移
                      neuron0   neuron1   neuron2                            neuron0 答案示例，1和2同理
 x0[2,4,3]           [   3   ,    7    ,    2   ]                      [ g * (3 - u0) / sqrt(o0**2 + e) + b]
-x1[1,3,4]   * W =>  [   2   ,    6    ,    1   ]  ==== 批量归一化 ===> [ g * (3 - u0) / sqrt(o0**2 + e) + b]
-x2[5,9,8]           [   4   ,    5    ,    8   ]                      [ g * (3 - u0) / sqrt(o0**2 + e) + b]
+x1[1,3,4]   * W =>  [   2   ,    6    ,    1   ]  ==== 批量归一化 ===> [ g * (2 - u0) / sqrt(o0**2 + e) + b]
+x2[5,9,8]           [   4   ,    5    ,    8   ]                      [ g * (4 - u0) / sqrt(o0**2 + e) + b]
 
 注意，g和b是共享的，u0 o0是每个神经元独自计算的
 
@@ -93,9 +93,20 @@ torch.
 # 其实就是用整个训练集做embedding作为输入，hpreact = X @ W1 + b1
 # 然后计算全量训练集的hpreact的结果的平均值和标准差
 # 在推理的时候，计算loss时，就用这个固定的额值：hpreact = bngain * (hpreact - bnmean) / bnstd + bnbias
-# 
+
+'''
+with torch.no_grad():
+    # pass the traing set through
+    emb = C[Xtr]
+    embcat = emb.view(emb.shape[0], -1)
+    hpreact = embcat @ W1 + b1
+    # measure the mean / std over the entire training set
+    bnmean = hpreact.mean(0, keepdim=True)
+    bnstd = hpreact.std(0, keepdim=True)
+'''
+
 # 方法2
-# 每个阶段以0.001的临时量来更新，这样就不用最后算一次了
+# 每次训练完成后以0.001的临时量来更新，这样就不用最后算一次了
 #with torch.no_grad()
 # bnmean = 0.999 * bnmean + 0.001 * bnmeani
 # bnstd = 0.999 * bnstd + 0.001 * bnstdi
